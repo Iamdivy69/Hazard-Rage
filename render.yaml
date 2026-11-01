@@ -1,0 +1,48 @@
+services:
+  - type: web
+    name: hazard-rage-api
+    runtime: node
+    plan: free
+    buildCommand: >-
+      npm --prefix backend install &&
+      cd backend &&
+      ./node_modules/.bin/prisma migrate deploy --schema=../prisma/schema.prisma &&
+      ./node_modules/.bin/prisma generate --schema=../prisma/schema.prisma &&
+      cd .. &&
+      NODE_PATH=backend/node_modules node prisma/seed.cjs
+    startCommand: node backend/src/server.js
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_VERSION
+        value: ~20
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: hazard-rage-db
+          property: connectionString
+      - key: REDIS_URL
+        sync: false # Paste an Upstash Redis URL (free tier). App runs degraded-but-alive without it.
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+
+databases:
+  - name: hazard-rage-db
+    plan: free
+    postgresMajorVersion: "16"
+    # After first deploy, enable PostGIS once via Render Shell:
+    #   psql $DATABASE_URL -c "CREATE EXTENSION IF NOT EXISTS postgis;"

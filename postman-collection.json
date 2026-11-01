@@ -1,0 +1,9 @@
+{"info": {"name": "Hazard Rage API", "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"}, "item": [
+  {"name": "health", "request": {"method": "GET", "url": "{{base}}/health"}},
+  {"name": "register", "request": {"method": "POST", "url": "{{base}}/auth/register", "body": {"mode": "raw", "raw": "{\"name\":\"Demo\",\"email\":\"demo@x.local\",\"password\":\"secret12\"}"}}},
+  {"name": "login-admin", "request": {"method": "POST", "url": "{{base}}/auth/login", "body": {"mode": "raw", "raw": "{\"email\":\"admin@hazard.local\",\"password\":\"password123\"}"}}},
+  {"name": "zones", "request": {"method": "GET", "url": "{{base}}/../zones"}},
+  {"name": "report-create", "request": {"method": "POST", "url": "{{base}}/../reports", "body": {"mode": "raw", "raw": "{\"zone_id\":1,\"waste_type\":\"plastic\",\"severity\":\"Med\"}"}}},
+  {"name": "trends", "request": {"method": "GET", "url": "{{base}}/../../hazard/trends?days=30"}},
+  {"name": "export-csv", "request": {"method": "GET", "url": "{{base}}/../../exports/reports.csv"}}
+], "variable": [{"key": "base", "value": "http://localhost:3001/api/v1"}]}

@@ -1,0 +1,31 @@
+# Deps (lockfiles ARE committed for reproducible deploys)
+node_modules/
+
+# Env (never commit real secrets)
+.env
+.env.local
+.env.*.local
+
+# Builds
+dist/
+build/
+frontend/dist/
+
+# Uploads (ephemeral locally; Cloudinary in production)
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Prisma
+prisma/*.db
+prisma/*.db-journal
+
+# Logs / OS
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea/

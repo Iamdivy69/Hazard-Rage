@@ -1,0 +1,148 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  citizen
+  municipal_admin
+  system_admin
+}
+
+enum WasteType {
+  organic
+  plastic
+  construction
+  biomedical
+  mixed
+}
+
+enum Severity {
+  Low
+  Med
+  High
+}
+
+enum ReportStatus {
+  Pending
+  In_Progress @map("In Progress")
+  Resolved
+}
+
+enum HazardLevel {
+  Low
+  Medium
+  High
+}
+
+enum AlertStatus {
+  Active
+  Acknowledged
+  Resolved
+}
+
+model User {
+  id           Int           @id @default(autoincrement())
+  name         String        @db.VarChar(120)
+  email        String        @unique @db.VarChar(255)
+  passwordHash String        @map("password_hash") @db.VarChar(255)
+  role         Role          @default(citizen)
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  reports      WasteReport[]
+
+  @@map("users")
+}
+
+model City {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique @db.VarChar(120)
+  state     String?  @db.VarChar(120)
+  lat       Float
+  lng       Float
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  zones     Zone[]
+
+  @@map("cities")
+}
+
+model Zone {
+  id           Int           @id @default(autoincrement())
+  cityId       Int           @default(1) @map("city_id")
+  city         City          @relation(fields: [cityId], references: [id], onDelete: Restrict)
+  name         String        @unique @db.VarChar(120)
+  lat          Float
+  lng          Float
+  zoneType     String        @map("zone_type") @db.VarChar(80)
+  currentScore Float         @default(0) @map("current_score")
+  currentLevel HazardLevel   @default(Low) @map("current_level")
+  updatedAt    DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+  reports      WasteReport[]
+  scores       HazardScore[]
+  alerts       Alert[]
+
+  @@index([currentLevel])
+  @@map("zones")
+}
+
+model WasteReport {
+  id          Int          @id @default(autoincrement())
+  userId      Int          @map("user_id")
+  zoneId      Int          @map("zone_id")
+  wasteType   WasteType    @map("waste_type")
+  severity    Severity
+  imageUrl    String?      @map("image_url") @db.VarChar(512)
+  resolvedImageUrl String?   @map("resolved_image_url") @db.VarChar(512)
+  lat         Float?
+  lng         Float?
+  description String?      @db.Text
+  status      ReportStatus @default(Pending)
+  reportedAt  DateTime     @default(now()) @map("reported_at") @db.Timestamptz
+  user        User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+  zone        Zone         @relation(fields: [zoneId], references: [id], onDelete: Restrict)
+
+  @@index([zoneId, status, reportedAt])
+  @@index([userId])
+  @@index([zoneId, reportedAt])
+  @@map("waste_reports")
+}
+
+model HazardScore {
+  id         Int         @id @default(autoincrement())
+  zoneId     Int         @map("zone_id")
+  score      Float
+  level      HazardLevel
+  inputsJson Json        @map("inputs_json")
+  computedAt DateTime    @default(now()) @map("computed_at") @db.Timestamptz
+  zone       Zone        @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+
+  @@index([zoneId, computedAt(sort: Desc)])
+  @@map("hazard_scores")
+}
+
+model Alert {
+  id        Int         @id @default(autoincrement())
+  zoneId    Int         @map("zone_id")
+  score     Float
+  threshold Float       @default(7.0)
+  status    AlertStatus @default(Active)
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  zone      Zone        @relation(fields: [zoneId], references: [id], onDelete: Restrict)
+
+  @@index([zoneId, status])
+  @@index([status, createdAt(sort: Desc)])
+  @@map("alerts")
+}
+
+model RemediationRule {
+  id        Int         @id @default(autoincrement())
+  wasteType WasteType   @map("waste_type")
+  level     HazardLevel
+  action    String      @db.Text
+
+  @@unique([wasteType, level])
+  @@map("remediation_rules")
+}
